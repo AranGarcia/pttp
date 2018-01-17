@@ -1,0 +1,5 @@
+# IDE and text editors
+.vscode/
+
+# Bytecode files
+__pycache__/
