@@ -2,28 +2,31 @@
 '''
 Basic HTTP server
 
-usage: server.py [-h] port
+usage: pyserver [-h] [-p, --port PORT] [-w, --vhost DIR]
 
-positional arguments:
-  port        Listening server port number
+Simple python server that responds to GET and POST methods
 
 optional arguments:
-  -h, --help  show this help message and exit
+  -h, --help       show this help message and exit
+  -p, --port PORT  listening server PORT number.
+  -w, --vhost DIR  directory of the virtual host.
+
 '''
 
 import argparse
 import os
 import socket
+import threading
 
 import pttp
 
+MAXLEN = 8192
 
 class Server:
     '''
     HTTP server class that can respond to GET and POST messages.
     Default listening port is 8080.
     '''
-    stance = None
 
     def __init__(self, **kwargs):
         self.__host = ''
@@ -38,10 +41,8 @@ class Server:
 
     def start(self):
         '''
-        Start listening on the specified host and port
-        using blocking mode.
+        Start listening on the specified host and port.
         '''
-        print('pHTTP')
         print('Serving HTTP at port', self.__port)
         print('Virtual host:', self.__vhost)
         print()
@@ -51,17 +52,20 @@ class Server:
             print('Request receieved:', addr)
 
             # Read and parse the request
-            END = b'\r\n\r\n'
             message = bytearray()
 
             message += conn.recv(1024)
-            while message[-4:] != END:
+            while message[-4:] != pttp.END:
                 message += conn.recv(1024)
 
-            pttp.parseHTTP(message)
+                # Truncate request if it is too large
+                if len(message) >= MAXLEN:
+                    break
 
-            # Manage request
-            stat, request = pttp.parseHTTP(message)
+            pttp.parsehttp(message)
+
+            # Manage request and create response
+            stat, request = pttp.parsehttp(message)
             print(request)
             response = pttp.HTTPresponse(request, stat)
             print(response, '\n')

@@ -1,7 +1,9 @@
-''' Implementations for HTTP parsing '''
+'''
+Implementations for HTTP parsing request and building responses
+'''
 
 METHODS = (b'GET', b'HEAD', b'POST', b'OPTIONS')
-
+END = b'\r\n\r\n'
 
 class HTTPmessage:
     '''
@@ -26,27 +28,7 @@ class HTTPrequest(HTTPmessage):
     def __init__(self, method, target, version, headers, body=None):
         super(HTTPrequest, self).__init__(version, headers, body)
         self.method = method
-
         self.target = target
-
-    def __parsemsg(self, msg):
-        # Separation of message into:
-        reqline, *lines = msg.splitlines()
-
-        # Request line parsing
-        self.method, self.target, self.version =  \
-            reqline.split()
-
-        # Header parsing
-        sep = lines.index(b'')
-        for header in lines[:sep]:
-            name, value = header.split(b':', 1)
-            self.headers[bytes(name)] = bytes(value)
-
-        # Body parsing, if any
-        # (Usually for POST methods)
-        if sep < (len(lines) - 1):
-            self.body = lines[sep + 1:]
 
     def __str__(self):
         return '%s %s %s' % (
@@ -131,11 +113,15 @@ class HTTPerror:
         return cls.stattext[status]
 
 
-def parseHTTP(message):
+def parsehttp(message):
     '''
     Processing of an HTTP message according to section 3 of the
     RFC 7230, Message Format
     [https://tools.ietf.org/html/rfc7230#section-3]
+
+    Returns the status code for the response and a request object.
+
+    parsehttp(message) -> status_code, HTTPrequest
     '''
     # Request Line
     start = 0
