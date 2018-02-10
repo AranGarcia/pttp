@@ -4,6 +4,7 @@ Implementations for HTTP parsing request and building responses
 
 METHODS = (b'GET', b'HEAD', b'POST', b'OPTIONS')
 END = b'\r\n\r\n'
+VHOST = b'./'
 
 class HTTPmessage:
     '''
@@ -61,13 +62,13 @@ class HTTPresponse(HTTPmessage):
         self.stattext = b'OK'
         # Body
         if request.target == b'/':
-            target = b'src/html/index.html'
+            target = VHOST.encode() + b'/index.html'
         else:
             target = request.target[1:]
 
         # Check for 404
         try:
-            with open(file=target.decode(), mode='rb') as tfile:
+            with open(target.decode(), mode='rb') as tfile:
                 self.body = tfile.read()
         except FileNotFoundError:
             self.status = 404
@@ -141,17 +142,16 @@ def parsehttp(message):
     line = message[start:end]
     while line:
         header, value = line.split(b':', 1)
-        headers[bytes(header.strip())] = bytes(value.strip())
+        headers[header.decode().strip()] = value.decode().strip()
 
         start = end + 2
         end = message.find(b'\r\n', start)
         line = message[start:end]
 
-    # Body, if any
+    # Body, if the content header is present
     start = end + 2
     end = message.find(b'\r\n', start)
     if b'Content-Length' in headers and end != -1:
-        # Content header indicates there is a request body
         body = bytes(message[start:int(headers[b'Content-Length'])])
     else:
         body = b''

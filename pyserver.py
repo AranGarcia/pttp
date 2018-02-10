@@ -44,8 +44,9 @@ class Server:
         Start listening on the specified host and port.
         '''
         print('Serving HTTP at port', self.__port)
-        print('Virtual host:', self.__vhost)
-        print()
+        print('Virtual host:', self.__vhost, '\n')
+
+        pttp.VHOST = self.__vhost
         self.sock.listen(1)
         while True:
             conn, addr = self.sock.accept()
