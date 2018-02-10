@@ -29,7 +29,24 @@ class HTTPrequest(HTTPmessage):
     def __init__(self, method, target, version, headers, body=None):
         super(HTTPrequest, self).__init__(version, headers, body)
         self.method = method
-        self.target = target
+        
+        self.parameters = {}
+        self.__parsetarget(target)
+
+    def __parsetarget(self, target):
+        try:
+            pos = target.index(b'?')
+            self.target = target[:pos]
+
+            qstring = target[pos + 1 :]
+
+            for part in qstring.split(b'&'):
+                q, p = part.split(b'=')
+                self.parameters[q.decode()] = p.decode()
+            
+
+        except ValueError:
+            self.target = target
 
     def __str__(self):
         return '%s %s %s' % (
@@ -124,6 +141,7 @@ def parsehttp(message):
 
     parsehttp(message) -> status_code, HTTPrequest
     '''
+    print('Parsing')
     # Request Line
     start = 0
     end = message.find(b'\r\n')
@@ -147,7 +165,7 @@ def parsehttp(message):
         start = end + 2
         end = message.find(b'\r\n', start)
         line = message[start:end]
-
+    
     # Body, if the content header is present
     start = end + 2
     end = message.find(b'\r\n', start)

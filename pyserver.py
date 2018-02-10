@@ -56,15 +56,13 @@ class Server:
             message = bytearray()
 
             message += conn.recv(1024)
+            print(message)
             while message[-4:] != pttp.END:
                 message += conn.recv(1024)
 
                 # Truncate request if it is too large
                 if len(message) >= MAXLEN:
                     break
-
-            pttp.parsehttp(message)
-
             # Manage request and create response
             stat, request = pttp.parsehttp(message)
             print(request)
