@@ -1,3 +1,3 @@
 # PTTP
-A basic, simple python web server.
-Responds to GET methods.
+
+HTTP server implemented with python for educational purposes.
