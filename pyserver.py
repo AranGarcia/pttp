@@ -50,13 +50,12 @@ class Server:
         self.sock.listen(1)
         while True:
             conn, addr = self.sock.accept()
-            print('Request receieved:', addr)
+            print('REQUEST RECEVIED:', addr)
 
             # Read and parse the request
             message = bytearray()
 
             message += conn.recv(1024)
-            print(message)
             while message[-4:] != pttp.END:
                 message += conn.recv(1024)
 

@@ -2,9 +2,13 @@
 Implementations for HTTP parsing request and building responses
 '''
 
+import os
+import re
+
 METHODS = (b'GET', b'HEAD', b'POST', b'OPTIONS')
 END = b'\r\n\r\n'
 VHOST = b'./'
+
 
 class HTTPmessage:
     '''
@@ -29,7 +33,7 @@ class HTTPrequest(HTTPmessage):
     def __init__(self, method, target, version, headers, body=None):
         super(HTTPrequest, self).__init__(version, headers, body)
         self.method = method
-        
+
         self.parameters = {}
         self.__parsetarget(target)
 
@@ -38,19 +42,28 @@ class HTTPrequest(HTTPmessage):
             pos = target.index(b'?')
             self.target = target[:pos]
 
-            qstring = target[pos + 1 :]
+            qstring = target[pos + 1:]
 
             for part in qstring.split(b'&'):
                 q, p = part.split(b'=')
                 self.parameters[q.decode()] = p.decode()
-            
 
         except ValueError:
             self.target = target
 
     def __str__(self):
-        return '%s %s %s' % (
-            self.method.decode(), self.target.decode(), self.version.decode(),)
+        # Do the closest thing as a string builder, so if there are any headers they should
+        # all be printed out
+        headers_text = bytearray()
+
+        for k, v in self.headers.items():
+            line = b'\t' + k + b' : ' + v + b'\n'
+            headers_text.extend(line)
+
+        return '%s %s %s\n%s' % (
+            self.method.decode(), self.target.decode(),
+            self.version.decode(), headers_text.decode()
+        )
 
 
 class HTTPresponse(HTTPmessage):
@@ -77,14 +90,22 @@ class HTTPresponse(HTTPmessage):
         # Status line
         self.status = 200
         self.stattext = b'OK'
-        # Body
-        if request.target == b'/':
-            target = VHOST.encode() + b'/index.html'
-        else:
-            target = request.target[1:]
 
         # Check for 404
         try:
+            # Body
+            if request.target == b'/':
+                index = HTTPresponse.__find_index()
+
+                print("index is ",index)
+                if not index:
+                    raise FileNotFoundError
+
+                target = VHOST.encode() + index
+            else:
+                target = request.target[1:]
+
+            print("Opening file", target)
             with open(target.decode(), mode='rb') as tfile:
                 self.body = tfile.read()
         except FileNotFoundError:
@@ -106,6 +127,17 @@ class HTTPresponse(HTTPmessage):
     def __str__(self):
         return '%s %s %s' % (
             self.version.decode(), str(self.status), self.stattext.decode())
+
+    @staticmethod
+    def __find_index():
+        files = os.listdir(VHOST)
+        p = re.compile('index.((html)|(php))')
+
+        for f in files:
+            if p.match(f):
+                return f.encode()
+        
+        return None
 
 
 class HTTPerror:
@@ -160,12 +192,12 @@ def parsehttp(message):
     line = message[start:end]
     while line:
         header, value = line.split(b':', 1)
-        headers[header.decode().strip()] = value.decode().strip()
+        headers[bytes(header.strip())] = bytes(value.strip())
 
         start = end + 2
         end = message.find(b'\r\n', start)
         line = message[start:end]
-    
+
     # Body, if the content header is present
     start = end + 2
     end = message.find(b'\r\n', start)
