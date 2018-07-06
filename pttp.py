@@ -103,7 +103,7 @@ class HTTPresponse(HTTPmessage):
 
                 target = VHOST.encode() + index
             else:
-                target = request.target[1:]
+                target = VHOST.encode() + b'/' + request.target[1:]
 
             print("Opening file", target)
             with open(target.decode(), mode='rb') as tfile:
@@ -135,7 +135,7 @@ class HTTPresponse(HTTPmessage):
 
         for f in files:
             if p.match(f):
-                return f.encode()
+                return b'/' + f.encode()
         
         return None
 

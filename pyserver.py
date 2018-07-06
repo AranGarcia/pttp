@@ -90,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-w, --vhost',
         dest='vhost',
-        default='.',
+        default='./src/html/',
         help='directory of the virtual host.',
         metavar='DIR'
     )
