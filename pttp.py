@@ -108,7 +108,7 @@ class HTTPresponse(HTTPmessage):
             print("Opening file", target)
             with open(target.decode(), mode='rb') as tfile:
                 self.body = tfile.read()
-        except FileNotFoundError:
+        except (FileNotFoundError, NotADirectoryError):
             self.status = 404
             self.__builderr(404)
 

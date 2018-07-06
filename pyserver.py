@@ -82,7 +82,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-p, --port',
         dest='port',
-        default='8080',
+        default='80',
         help='listening server PORT number.',
         metavar='PORT',
         type=int
